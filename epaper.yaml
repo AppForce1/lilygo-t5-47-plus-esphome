@@ -1,0 +1,156 @@
+esphome:
+  name: lilygo
+  platformio_options:
+    # Unless noted otherwise, based on https://github.com/Xinyuan-LilyGO/LilyGo-EPD47/blob/1eb6119fc31fcff7a6bafecb09f4225313859fc5/examples/demo/platformio.ini#L37
+    upload_speed: 921600
+    monitor_speed: 115200
+    board_build.mcu: esp32s3
+    board_build.f_cpu: 240000000L
+    board_build.arduino.memory_type: qspi_opi
+    board_build.flash_size: 16MB
+    board_build.flash_mode: qio
+    board_build.flash_type: qspi
+    board_build.psram_type: opi
+    board_build.memory_type: qspi_opi
+    board_build.boot_freq: 80m
+    platform_packages:
+      - "toolchain-riscv32-esp @8.4.0+2021r2-patch5"
+    build_flags:  # the first three defines are required for the screen library to function.
+      - "-DBOARD_HAS_PSRAM"
+      - "-DARDUINO_RUNNING_CORE=0"  # TODO: this conflicts with the value from platformio's idedata, spewing a lot of warnings during the build.
+      - "-DARDUINO_EVENT_RUNNING_CORE=0"  # and this too
+      # In addition to lilygo's settings:
+      # To enable reading logs over USB until `hardware_uart: USB_CDC` support
+      # is added to `logger:`, as detailed in <https://github.com/esphome/feature-requests/issues/1906>:
+      - "-DARDUINO_USB_MODE=1"
+      - "-DARDUINO_USB_CDC_ON_BOOT=1"
+  libraries: 
+    - SPI
+
+esp32:
+  variant: esp32s3
+  board: esp32-s3-devkitc-1
+
+  framework:
+    type: arduino
+    # Just like in <https://community.home-assistant.io/t/enable-usb-cdc-to-log-hello-world-to-esp32-s3-dev-board-for-esphome/463164/10>
+    # I had problems with newer versions; the following combination happens to work, so using it for now.
+    version: 2.0.3
+    platform_version: 5.1.1
+
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  password: !secret ota_password
+  platform: esphome
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Epaper Fallback Hotspot"
+    password: "GyKWYQEVkV0L"
+
+captive_portal:
+
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: GPIO21 #was GPIO39 on the previous board
+      inverted: true
+    name: "Button 1"
+    on_press:
+      - logger.log: PhysButton Pressed
+
+external_components:
+  # https://github.com/nickolay/esphome-lilygo-t547plus
+  - source: github://nickolay/esphome-lilygo-t547plus
+    components: ["t547"]
+  # https://github.com/kaeltis/esphome-lilygo-t547plus
+  - source: github://kaeltis/esphome-lilygo-t547plus
+    components: ["lilygo_t5_47_battery"]
+
+# display:
+#   - platform: t547
+#     # rotation: 180
+#     update_interval: 30s
+#     lambda: |-
+#       it.line(0, 0, 960, 540);
+
+i2c:
+  - id: bus_a
+    sda: GPIO18
+    scl: GPIO17
+    frequency: 100khz
+    # There is some problems with i2c scan so turn scan off if problem appear on your board
+    scan: False
+
+time:
+  - platform: pcf8563
+    id: internal_clock
+    address: 0x51  
+    i2c_id: bus_a
+  - platform: homeassistant
+    id: ha_time
+    on_time_sync:
+      then:
+        - pcf8563.write_time
+
+sensor:
+  # - platform: internal_temperature
+  #   id: esptemp
+  #   name: "Internal Temperature"
+  #   update_interval: 1s
+
+  - platform: lilygo_t5_47_battery
+    id: battery_voltage
+    voltage:
+      name: "Battery Voltage"
+
+  - platform: template
+    name: "Battery Percentage"
+    id: battery_percentage
+    lambda: |-
+      // tweak values in mapping for calibration
+      // 4.2 = max voltage
+      // 3.2 = min voltage
+      float y = (id(battery_voltage).voltage->state - 3.2) * 100.0 / (4.2 - 3.2);
+      if (y < 100.0) { return y; } else { return 100.0; };
+
+
+font:
+  # https://github.com/hprobotic/Google-Sans-Font/blob/master/
+  - file: fonts/GoogleSans-Bold.ttf
+    id: font_1
+    size: 45
+  - file: fonts/GoogleSans-Bold.ttf
+    id: font_2
+    size: 150
+  - file: "fonts/GoogleSans-Bold.ttf"
+    id: font_clock
+    size: 300
+    glyphs: [':', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+
+display:
+- platform: t547
+  id: t5_display
+  update_interval: 30s
+  # rotation: 180
+  #clear: true
+  #full_update_every: 3
+  #power_off_delay_enabled: true
+  lambda: |-
+    it.printf(10, 50, id(font_1), "Battery: %.1f% (%.1fV)", id(battery_percentage).state, id(battery_voltage).voltage->state);
+    // https://esphome.io/cookbook/display_time_temp_oled.html 
+    // it.printf(10, 100, id(font_1), "Internal Temp: %.1f°C", id(esptemp).state);
+
+    it.strftime(it.get_width()/2, it.get_height()/2-150, id(font_clock), TextAlign::TOP_CENTER, "%H:%M", id(ha_time).now());
