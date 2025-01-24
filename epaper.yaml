@@ -1,3 +1,7 @@
+substitutions:
+  run_time: 1min
+  sleep_time: 1h
+
 esphome:
   name: lilygo
   platformio_options:
@@ -47,6 +51,14 @@ api:
   encryption:
     key: !secret api_encryption_key
 
+deep_sleep:
+    run_duration: ${run_time}
+    sleep_duration: ${sleep_time}
+    id: deep_sleep_1
+    esp32_ext1_wakeup:
+      pins: GPIO21
+      mode: ALL_LOW
+
 ota:
   password: !secret ota_password
   platform: esphome
@@ -62,14 +74,14 @@ wifi:
 
 captive_portal:
 
-binary_sensor:
-  - platform: gpio
-    pin: 
-      number: GPIO21 #was GPIO39 on the previous board
-      inverted: true
-    name: "Button 1"
-    on_press:
-      - logger.log: PhysButton Pressed
+# binary_sensor:
+#   - platform: gpio
+#     pin: 
+#       number: GPIO21 #was GPIO39 on the previous board
+#       inverted: true
+#     name: "Button 1"
+#     on_press:
+#       - logger.log: PhysButton Pressed
 
 external_components:
   # https://github.com/nickolay/esphome-lilygo-t547plus
