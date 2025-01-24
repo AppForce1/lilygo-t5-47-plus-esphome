@@ -142,14 +142,20 @@ sensor:
 font:
   # https://github.com/hprobotic/Google-Sans-Font/blob/master/
   - file: fonts/GoogleSans-Bold.ttf
-    id: font_1
-    size: 45
+    id: font_battery
+    size: 25
   - file: fonts/GoogleSans-Bold.ttf
-    id: font_2
-    size: 150
+    id: font_50
+    size: 50
+  - file: fonts/GoogleSans-Bold.ttf
+    id: font_40
+    size: 40
+  - file: fonts/GoogleSans-Bold.ttf
+    id: font_30
+    size: 30
   - file: "fonts/GoogleSans-Bold.ttf"
     id: font_clock
-    size: 300
+    size: 150
     glyphs: [':', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 
 display:
@@ -157,12 +163,14 @@ display:
   id: t5_display
   update_interval: 30s
   # rotation: 180
+  rotation: 270
   #clear: true
   #full_update_every: 3
   #power_off_delay_enabled: true
   lambda: |-
-    it.printf(10, 50, id(font_1), "Battery: %.1f% (%.1fV)", id(battery_percentage).state, id(battery_voltage).voltage->state);
+    it.printf(it.get_width()-10, 10, id(font_battery), TextAlign::RIGHT, "Battery: %.1f%% (%.1fV)", id(battery_percentage).state, id(battery_voltage).voltage->state);
     // https://esphome.io/cookbook/display_time_temp_oled.html 
     // it.printf(10, 100, id(font_1), "Internal Temp: %.1f°C", id(esptemp).state);
 
     it.strftime(it.get_width()/2, it.get_height()/2-150, id(font_clock), TextAlign::TOP_CENTER, "%H:%M", id(ha_time).now());
+    it.rectangle(5, 5, 530, 950);
