@@ -46,9 +46,9 @@ esphome:
     - priority: -100.0
       then:
         # Update all sensors 
-        - component.update: wifi_signal_sensor
-        - component.update: last_wake_up_cause
-        - component.update: battery_level
+        - component.update: lilygo_wifi_signal_sensor
+        - component.update: lilygo_last_wake_up_cause
+        - component.update: lilygo_battery_level
 
   platformio_options:
     # Unless noted otherwise, based on https://github.com/Xinyuan-LilyGO/LilyGo-EPD47/blob/1eb6119fc31fcff7a6bafecb09f4225313859fc5/examples/demo/platformio.ini#L37
@@ -163,7 +163,7 @@ script:
       - component.update: t5_display
       - logger.log: 'Updating last_display_update timestamp...'
       - sensor.template.publish:
-          id: last_display_update
+          id: lilygo_last_display_update
           state: !lambda 'return id(homeassistant_time).now().timestamp;'
 
   - id: update_screen_if_data_updated
@@ -175,7 +175,7 @@ script:
               - and:
                   - lambda: 'return id(battery_empty_symbol_shown) == true;'
                   - sensor.in_range:
-                      id: battery_level
+                      id: lilygo_battery_level
                       above: 0.0
           then:
             - logger.log: 'Calendar data updated - Refreshing panel...'
@@ -185,7 +185,7 @@ script:
       - if:
           condition:
             sensor.in_range:
-              id: battery_level
+              id: lilygo_battery_level
               below: 0.0
           then:
             - logger.log: 'Battery is empty - Refreshing panel to show icon...'
@@ -259,7 +259,7 @@ script:
       - wait_until:
           condition: time.has_time
       - sensor.template.publish:
-          id: last_wake_up
+          id: lilygo_last_wake_up
           state: !lambda 'return id(homeassistant_time).now().timestamp;'
       - wait_until:
           condition:
@@ -342,7 +342,7 @@ sensor:
     name: Last Display Update
     device_class: timestamp
     entity_category: "diagnostic"
-    id: last_display_update
+    id: lilygo_last_display_update
     lambda: "return id(last_display_update_stored);"
     on_value:
       then:
@@ -352,7 +352,7 @@ sensor:
     name: Last Wake Up
     device_class: timestamp
     entity_category: "diagnostic"
-    id: last_wake_up
+    id: lilygo_last_wake_up
   
   - platform: lilygo_t5_47_battery
     id: battery_voltage
@@ -361,7 +361,7 @@ sensor:
 
   - platform: template
     name: "Battery Level"
-    id: battery_level
+    id: lilygo_battery_level
     entity_category: diagnostic
     device_class: battery
     unit_of_measurement: '%'
@@ -377,12 +377,12 @@ sensor:
 
   - platform: wifi_signal
     name: WiFi Signal Sensor
-    id: wifi_signal_sensor
+    id: lilygo_wifi_signal_sensor
     entity_category: "diagnostic"
 
   - platform: template
     name: Last Wake Up Cause
-    id: last_wake_up_cause
+    id: lilygo_last_wake_up_cause
     entity_category: "diagnostic"
     accuracy_decimals: 0
     lambda: return esp_sleep_get_wakeup_cause();
@@ -628,13 +628,13 @@ display:
     // Fill background in black.
     it.fill(color_background);
 
-    it.printf(it.get_width()-5, it.get_height()-5, id(font_battery), TextAlign::BOTTOM_RIGHT, "Battery: %.1f%% (%.1fV)", id(battery_level).state, id(battery_voltage).voltage->state);
+    it.printf(it.get_width()-5, it.get_height()-5, id(font_battery), TextAlign::BOTTOM_RIGHT, "Battery: %.1f%% (%.1fV)", id(lilygo_battery_level).state, id(battery_voltage).voltage->state);
     // https://esphome.io/cookbook/display_time_temp_oled.html 
     // it.printf(10, 100, id(font_1), "Internal Temp: %.1f°C", id(esptemp).state);
 
     it.strftime(5, it.get_height() - 5, id(font_clock), TextAlign::BOTTOM_LEFT, "%H:%M", id(ha_time).now());
         
-    if (id(battery_level).state == 0.0) {
+    if (id(lilygo_battery_level).state == 0.0) {
       id(battery_empty_symbol_shown) = true;
       it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["battery-alert-variant-outline"].c_str());
     } else {
@@ -675,7 +675,7 @@ display:
         }
         
         it.printf(max_todays_date_width / 2 + todays_date_x_offset, 10, id(font_bold_150), color_content, TextAlign::TOP_CENTER, "%d", time.day_of_month);
-        it.printf(max_todays_date_width / 2 + todays_date_x_offset, 159, id(font_medium_35), color_content, TextAlign::TOP_CENTER, "%s", id(todays_day_name).state.c_str());
+        it.printf(max_todays_date_width / 2 + todays_date_x_offset, 155, id(font_medium_35), color_content, TextAlign::TOP_CENTER, "%s", id(todays_day_name).state.c_str());
         it.printf(max_todays_date_width / 2 + todays_date_x_offset, 195, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", id(todays_date_month_year).state.c_str());
     
         // Draw Calendar
