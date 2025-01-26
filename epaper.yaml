@@ -6,6 +6,10 @@ substitutions:
   battery_full_voltage: "4.2" # in V
   battery_empty_voltage: "3.2" # in V
   
+  # Our timezone calculations are a bit off around midnigh. A full day event remains on screen when timzeon offset midnight has not passed yet. So we stop updating at 22:00 in the evening.
+  night_time_start: "22"
+  night_time_end: "6"
+  
   calendar_data_entity_id: sensor.esp_calendar_data
   calendar_data_update_during_deep_sleep_entity_id: binary_sensor.esp_calendar_data_update_during_deep_sleep
 
@@ -21,6 +25,27 @@ esphome:
     - includes/calendar/text_utilities.h
     - includes/calendar/time_utilities.h
     - includes/calendar/misc_utilities.h
+  on_boot:
+    - priority: 300.0
+      then:
+        - if:
+            condition:
+              # 0 = normal boot
+              - lambda: 'return esp_sleep_get_wakeup_cause() == 0;'
+            then:
+              # Show "waiting for data" screen
+              - script.execute: update_screen
+    - priority: -100.0
+      then:
+        - script.execute: boot_script
+  on_shutdown:
+    - priority: -100.0
+      then:
+        # Update all sensors 
+        - component.update: wifi_signal_sensor
+        - component.update: last_wake_up_cause
+        - component.update: battery_level
+
   platformio_options:
     # Unless noted otherwise, based on https://github.com/Xinyuan-LilyGO/LilyGo-EPD47/blob/1eb6119fc31fcff7a6bafecb09f4225313859fc5/examples/demo/platformio.ini#L37
     upload_speed: 921600
@@ -71,13 +96,12 @@ api:
   encryption:
     key: !secret api_encryption_key
 
-# deep_sleep:
-#     run_duration: ${run_time}
-#     sleep_duration: ${sleep_time}
-#     id: deep_sleep_1
-#     esp32_ext1_wakeup:
-#       pins: GPIO21
-#       mode: ALL_LOW
+deep_sleep:
+    id: deep_sleep_1
+    wakeup_pin: 
+      number: 21
+      allow_other_uses: True
+      inverted: true
 
 ota:
   password: !secret ota_password
@@ -93,16 +117,7 @@ wifi:
     password: "GyKWYQEVkV0L"
 
 captive_portal:
-
-# binary_sensor:
-#   - platform: gpio
-#     pin: 
-#       number: GPIO21 #was GPIO39 on the previous board
-#       inverted: true
-#     name: "Button 1"
-#     on_press:
-#       - logger.log: PhysButton Pressed
-
+  
 external_components:
   # https://github.com/nickolay/esphome-lilygo-t547plus
   - source: github://nickolay/esphome-lilygo-t547plus
@@ -120,16 +135,33 @@ i2c:
     scan: False
 
 globals:
-    - id: data_received
-      type: bool
-      restore_value: no
-      initial_value: 'false'
-    - id: battery_empty_symbol_shown
-      type: bool
-      restore_value: yes
-      initial_value: 'true'
+  - id: data_received
+    type: bool
+    restore_value: no
+    initial_value: 'false'
+  - id: battery_empty_symbol_shown
+    type: bool
+    restore_value: yes
+    initial_value: 'true'
+  - id: last_display_update_stored
+    type: long int
+    restore_value: yes
+    initial_value: '0'
+  - id: boot_script_finished_running
+    type: bool
+    restore_value: no
+    initial_value: 'false'
 
 script:
+  - id: update_screen
+    then:
+      - logger.log: 'Running update_screen script...'
+      - component.update: t5_display
+      - logger.log: 'Updating last_display_update timestamp...'
+      - sensor.template.publish:
+          id: last_display_update
+          state: !lambda 'return id(homeassistant_time).now().timestamp;'
+
   - id: update_screen_if_data_updated
     then:
       - if:
@@ -156,7 +188,91 @@ script:
             # - script.execute: update_screen
             - logger.log: 'Battery is empty - Shutting down...'
             # - button.press: shutdown_button
+  - id: check_deep_sleep
+    then:
+      # Wait so some more sensor updates can be pushed out
+      - delay: 500ms
+      - if:
+          condition:
+              - binary_sensor.is_off: disable_deep_sleep
+          then:
+            - script.execute: enter_deep_sleep
+          else:
+            - logger.log: 'Deep sleep disabled - Waiting for OTA update...'
+            # Suspend component update to reduce frequency when deep sleep is disabled
+            - component.suspend: battery_voltage
             
+  - id: enter_deep_sleep
+    then:
+      - lambda: |-
+          auto time = id(homeassistant_time).now();
+  
+          int night_time_start = $night_time_start;
+          int night_time_end = $night_time_end;
+  
+          // Default deep sleep duration
+          long deep_sleep_duration_in_sec = parse_time_to_seconds("$deep_sleep_duration");
+          
+          if (time.hour >= night_time_start || time.hour < night_time_end){
+            // Night time use extended deep sleep duration
+            deep_sleep_duration_in_sec = parse_time_to_seconds("$night_time_deep_sleep_duration");
+            ESP_LOGD("deep_sleep_duration_finder", "Default duration (night time): %ld seconds", deep_sleep_duration_in_sec);
+  
+            long night_end = seconds_until_night_end(time, night_time_end);
+            if (deep_sleep_duration_in_sec > night_end) {
+                  deep_sleep_duration_in_sec = night_end;
+                  ESP_LOGD("deep_sleep_duration_finder", "Night time duration exceeds end of the configured night time, shortening to: %ld seconds", deep_sleep_duration_in_sec);
+            }
+  
+          } else {
+            ESP_LOGD("deep_sleep_duration_finder", "Default duration (day time): %ld seconds", deep_sleep_duration_in_sec);
+          }
+          
+          // Time until midnight (+ 2s delay)
+          long midnight = seconds_until_midnight(time);
+          ESP_LOGD("deep_sleep_duration_finder", "Time until day change: %ld seconds", midnight);
+          midnight = midnight != 0 ? midnight + 2 : midnight;
+  
+          // Time until the next event end time (+ 61s delay)
+          long next_event = seconds_until_closest_event_end(time, id(closest_end_time).state);
+          ESP_LOGD("deep_sleep_duration_finder", "Time until next event ends: %ld seconds", next_event);
+          next_event = next_event != 0 ? next_event + 61 : next_event;
+  
+          // Calculate which comes first: default deep sleep duration, midnight, next event ends
+          long sleep_durations[3] = {deep_sleep_duration_in_sec, midnight, next_event};
+          long next_sleep_duration = find_non_zero_min_in_array(sleep_durations, 3);
+          ESP_LOGD("deep_sleep_duration_finder", "Next sleep duration will be: %ld seconds", next_sleep_duration);
+          
+          // Use result as the next deep sleep duration
+          id(deep_sleep_1).set_sleep_duration(next_sleep_duration*1000);
+  
+      - deep_sleep.enter:
+          id: deep_sleep_1
+                
+  - id: boot_script
+    then:
+      - logger.log: 'Running boot script...'
+      - wait_until:
+          condition: time.has_time
+      - sensor.template.publish:
+          id: last_wake_up
+          state: !lambda 'return id(homeassistant_time).now().timestamp;'
+      - wait_until:
+          condition:
+            lambda: 'return id(data_received) == true;'
+      - if:
+          condition:
+            # 4 = wake up timer
+            - lambda: 'return esp_sleep_get_wakeup_cause() == 4;'
+          then:
+            # Deep sleep wake up - update screen if data has changed
+            - script.execute: update_screen_if_data_updated
+          else:
+            # normal boot or wakeup button - update screen
+            - script.execute: update_screen
+      - script.execute: check_deep_sleep
+      - lambda: 'id(boot_script_finished_running) = true;'
+                        
 time:
   - platform: pcf8563
     id: internal_clock
@@ -178,14 +294,14 @@ time:
                 - binary_sensor.is_on: disable_deep_sleep
               then:
                 - component.update: battery_voltage
-      # - seconds: 0
-      #   minutes: /5
-      #   then:
-      #     - if:
-      #         condition: 
-      #           lambda: 'return id(boot_script_finished_running) == true;'
-      #         then:
-      #           - script.execute: update_screen_if_data_updated
+      - seconds: 0
+        minutes: /5
+        then:
+          - if:
+              condition: 
+                lambda: 'return id(boot_script_finished_running) == true;'
+              then:
+                - script.execute: update_screen_if_data_updated
 
 binary_sensor:
   - platform: homeassistant
@@ -197,6 +313,16 @@ binary_sensor:
     #       binary_sensor.is_off: disable_deep_sleep
     #     then:
     #       - script.execute: enter_deep_sleep
+    
+  - platform: gpio
+    pin: 
+      number: GPIO21 #was GPIO39 on the previous board
+      inverted: True
+      allow_other_uses: True
+    name: "Button 1"
+    on_press:
+      - logger.log: PhysButton Pressed
+
 
   - platform: homeassistant
     entity_id: $calendar_data_update_during_deep_sleep_entity_id
@@ -208,6 +334,22 @@ sensor:
   #   name: "Internal Temperature"
   #   update_interval: 1s
 
+  - platform: template
+    name: Last Display Update
+    device_class: timestamp
+    entity_category: "diagnostic"
+    id: last_display_update
+    lambda: "return id(last_display_update_stored);"
+    on_value:
+      then:
+        - lambda: "id(last_display_update_stored) = x;"
+
+  - platform: template
+    name: Last Wake Up
+    device_class: timestamp
+    entity_category: "diagnostic"
+    id: last_wake_up
+  
   - platform: lilygo_t5_47_battery
     id: battery_voltage
     voltage:
@@ -233,7 +375,14 @@ sensor:
     name: WiFi Signal Sensor
     id: wifi_signal_sensor
     entity_category: "diagnostic"
-  
+
+  - platform: template
+    name: Last Wake Up Cause
+    id: last_wake_up_cause
+    entity_category: "diagnostic"
+    accuracy_decimals: 0
+    lambda: return esp_sleep_get_wakeup_cause();
+
   - platform: homeassistant
     entity_id: $calendar_data_entity_id
     attribute: closest_end_time
@@ -453,6 +602,8 @@ display:
 - platform: t547
   id: t5_display
   rotation: 270
+  # update_interval: 10s
+  update_interval: never
   lambda: |-
     std::map < std::string, std::string > icon_map {
       {
