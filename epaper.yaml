@@ -803,7 +803,9 @@ display:
               }
             }
         
-            std::string subtitle_string = std::string(calendar_name) + (location_name && strlen(location_name) > 0 ? " · " + std::string(location_name) : "");
+            // std::string subtitle_string = std::string(calendar_name) + (location_name && strlen(location_name) > 0 ? " · " + std::string(location_name) : "");
+            std::string subtitle_string = (location_name && strlen(location_name) > 0 ? std::string(location_name) : "");
+
             if (subtitle_string.length() > max_event_subtitle_chars) {
               subtitle_string = subtitle_string.substr(0, max_event_subtitle_chars - 3) + "...";
             }
@@ -828,15 +830,18 @@ display:
               entry_y_position += summary_height + 2;
         
               // Draw subtitle string (calendar name and location)
-              it.printf(100, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_LEFT, "%s", subtitle_string.c_str());
+              if (subtitle_string.length() > 0) {
+                it.printf(100, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_LEFT, "%s", subtitle_string.c_str());
+              }
         
               // Draw end time
               if (!end_time.empty()) {
                 it.printf(screen_width - 10, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_RIGHT, "%s", end_time.c_str());
               }
-        
-              entry_y_position += subtitle_height + event_spacing;
-        
+              if (subtitle_string.length() > 0 || !end_time.empty() ) {
+                entry_y_position += subtitle_height + event_spacing;
+              }
+              
               // Event drawn - return true
               return true;
             } else {
