@@ -1,6 +1,9 @@
 substitutions:
   run_time: 1min
   sleep_time: 1h
+  # Screen dimensions, portrait mode
+  screen_height: "960"
+  screen_width: "540"
 
   # Specify the full and empty voltage of the battery you use
   battery_full_voltage: "4.2" # in V
@@ -90,7 +93,7 @@ logger:
 
 # Enable JSON stack
 json:
-  
+
 # Enable Home Assistant API
 api:
   encryption:
@@ -618,6 +621,9 @@ display:
     auto color_content = Color::WHITE;
     auto color_background = Color::BLACK;
     
+    int screen_height = $screen_height;
+    int screen_width = $screen_width;
+    
     // Fill background in black.
     it.fill(color_background);
 
@@ -629,13 +635,13 @@ display:
         
     if (id(battery_level).state == 0.0) {
       id(battery_empty_symbol_shown) = true;
-      it.printf(300, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["battery-alert-variant-outline"].c_str());
+      it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["battery-alert-variant-outline"].c_str());
     } else {
       id(battery_empty_symbol_shown) = false;
     
       if (id(data_received) == false) {
-        it.printf(300, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["calendar-sync"].c_str());
-        it.printf(300, 780, id(font_medium_20), color_content, TextAlign::BOTTOM_CENTER, "Waiting for data...");
+        it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["calendar-sync"].c_str());
+        it.printf(screen_width / 2, 780, id(font_medium_20), color_content, TextAlign::BOTTOM_CENTER, "Waiting for data...");
       } else {
         auto time = id(homeassistant_time).now();
     
@@ -719,7 +725,7 @@ display:
         JsonArray entries = doc.as<JsonArray>();
                 
         int current_y_position = 250; // Initial vertical position
-        const int max_y_position = 960; // Maximum vertical position
+        const int max_y_position = screen_height; // Maximum vertical position
         const int events_top_padding = 5; // Padding top first event within a day
         const int event_spacing = 10; // Spacing between the events within a day
         const int events_bottom_padding = 5; // Padding after the last entry of the day
@@ -815,7 +821,7 @@ display:
         
               // Draw start time
               if (!start_time.empty()) {
-                it.printf(530, entry_y_position, id(font_bold_25), color_content, TextAlign::TOP_RIGHT, "%s", start_time.c_str());
+                it.printf(screen_width - 10, entry_y_position, id(font_bold_25), color_content, TextAlign::TOP_RIGHT, "%s", start_time.c_str());
               }
         
               entry_y_position += summary_height + 2;
@@ -825,7 +831,7 @@ display:
         
               // Draw end time
               if (!end_time.empty()) {
-                it.printf(530, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_RIGHT, "%s", end_time.c_str());
+                it.printf(screen_width - 10, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_RIGHT, "%s", end_time.c_str());
               }
         
               entry_y_position += subtitle_height + event_spacing;
