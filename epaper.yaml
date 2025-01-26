@@ -307,12 +307,12 @@ binary_sensor:
   - platform: homeassistant
     id: disable_deep_sleep
     entity_id: input_boolean.disable_deep_sleep
-    # on_state:
-    #   if:
-    #     condition:
-    #       binary_sensor.is_off: disable_deep_sleep
-    #     then:
-    #       - script.execute: enter_deep_sleep
+    on_state:
+      if:
+        condition:
+          binary_sensor.is_off: disable_deep_sleep
+        then:
+          - script.execute: enter_deep_sleep
     
   - platform: gpio
     pin: 
