@@ -733,7 +733,7 @@ display:
         const int day_spacing = 15; // Spacing between different days
         
         int max_event_title_length = 30; // Max characters event title 
-        int max_event_subtitle_length = 44; // Max characters event subtitle 
+        int max_event_subtitle_length = 40; // Max characters event subtitle 
         
         for (JsonVariant entry: entries) {
           int day_number = entry["day"].as < int > ();
