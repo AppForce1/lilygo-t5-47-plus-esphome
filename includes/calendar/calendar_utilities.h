@@ -21,7 +21,7 @@ void get_calendar_matrix(int year, int month, char cal[7][7][3]) {
     day_of_week = (day_of_week + 5) % 7;
     
     // Fill in the weekdays
-    char weekdays[7][3] = {"Ma", "di", "Wo", "Do", "Vr", "Za", "Zo"};
+    char weekdays[7][3] = {"ma", "di", "wo", "do", "vr", "za", "zo"};
     for (int i = 0; i < 7; i++) {
         strcpy(cal[0][i], weekdays[i]);
     }

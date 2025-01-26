@@ -3,7 +3,7 @@
 # calendar.hello_world should be added on the other hand
 CALENDAR_NAMES = {"calendar.x": "X", "calendar.Y": "Y"}
 # Day names (which are displayed in the calendar event list) can be translated here if required
-DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+DAY_NAMES = ["ma", "di", "woe", "do", "vrij", "zat", "zon"]
 # How many entries to send to the ESPHome device
 MAX_ENTRIES = 10
 
