@@ -1,10 +1,11 @@
 substitutions:
-  run_time: 1min
-  sleep_time: 1h
   # Screen dimensions, portrait mode
   screen_height: "960"
   screen_width: "540"
 
+  deep_sleep_duration: 20min
+  night_time_deep_sleep_duration: 4h
+  
   # Specify the full and empty voltage of the battery you use
   battery_full_voltage: "4.2" # in V
   battery_empty_voltage: "3.2" # in V
