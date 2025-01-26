@@ -111,13 +111,6 @@ external_components:
   - source: github://kaeltis/esphome-lilygo-t547plus
     components: ["lilygo_t5_47_battery"]
 
-# display:
-#   - platform: t547
-#     # rotation: 180
-#     update_interval: 30s
-#     lambda: |-
-#       it.line(0, 0, 960, 540);
-
 i2c:
   - id: bus_a
     sda: GPIO18
@@ -459,11 +452,7 @@ font:
 display:
 - platform: t547
   id: t5_display
-  update_interval: 10s
   rotation: 270
-  #clear: true
-  #full_update_every: 3
-  #power_off_delay_enabled: true
   lambda: |-
     std::map < std::string, std::string > icon_map {
       {
