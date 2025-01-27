@@ -621,8 +621,13 @@ display:
     
     // Fill background in black.
     it.fill(color_background);
+    
+    float battery_full_voltage = $battery_full_voltage;
+    float battery_empty_voltage = $battery_empty_voltage;
+    
+    float battery_percentage = (id(battery_voltage).voltage->state - battery_empty_voltage) * 100.0 / (battery_full_voltage - battery_empty_voltage);
 
-    it.printf(it.get_width()-5, it.get_height()-5, id(font_battery), TextAlign::BOTTOM_RIGHT, "Battery: %.1f%% (%.1fV)", id(lilygo_battery_level).state, id(battery_voltage).voltage->state);
+    it.printf(it.get_width()-5, it.get_height()-5, id(font_battery), TextAlign::BOTTOM_RIGHT, "Battery: %.1f%% (%.1fV)", battery_percentage, id(battery_voltage).voltage->state);
     // https://esphome.io/cookbook/display_time_temp_oled.html 
     // it.printf(10, 100, id(font_1), "Internal Temp: %.1f°C", id(esptemp).state);
 
