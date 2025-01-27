@@ -3,8 +3,8 @@ substitutions:
   screen_height: "960"
   screen_width: "540"
 
-  deep_sleep_duration: 20min
-  night_time_deep_sleep_duration: 4h
+  deep_sleep_duration: 40min
+  night_time_deep_sleep_duration: 2h
   
   # Specify the full and empty voltage of the battery you use
   battery_full_voltage: "4.2" # in V
@@ -179,7 +179,7 @@ script:
                       above: 0.0
           then:
             - logger.log: 'Calendar data updated - Refreshing panel...'
-            # - script.execute: update_screen
+            - script.execute: update_screen
           else:
             - logger.log: 'Calendar data has not been updated - Skipping panel refresh...'
       - if:
@@ -189,7 +189,7 @@ script:
               below: 0.0
           then:
             - logger.log: 'Battery is empty - Refreshing panel to show icon...'
-            # - script.execute: update_screen
+            - script.execute: update_screen
             - logger.log: 'Battery is empty - Shutting down...'
             # - button.press: shutdown_button
   - id: check_deep_sleep
@@ -333,11 +333,6 @@ binary_sensor:
     id: calendar_data_update_during_deep_sleep
         
 sensor:
-  # - platform: internal_temperature
-  #   id: esptemp
-  #   name: "Internal Temperature"
-  #   update_interval: 1s
-
   - platform: template
     name: Last Display Update
     device_class: timestamp
@@ -606,7 +601,6 @@ display:
 - platform: t547
   id: t5_display
   rotation: 270
-  # update_interval: 10s
   update_interval: never
   lambda: |-
     std::map < std::string, std::string > icon_map {
