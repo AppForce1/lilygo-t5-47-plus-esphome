@@ -163,7 +163,7 @@ script:
       - component.update: t5_display
       - logger.log: 'Updating last_display_update timestamp...'
       - sensor.template.publish:
-          id: lilygo_last_display_update
+          id: last_display_update
           state: !lambda 'return id(homeassistant_time).now().timestamp;'
 
   - id: update_screen_if_data_updated
@@ -337,7 +337,7 @@ sensor:
     name: Last Display Update
     device_class: timestamp
     entity_category: "diagnostic"
-    id: lilygo_last_display_update
+    id: last_display_update
     lambda: "return id(last_display_update_stored);"
     on_value:
       then:
