@@ -15,36 +15,36 @@ template:
         {{ states.sensor.esp_calendar_data.last_updated > states.sensor.last_display_update.last_updated }}
   # Sensor that contains the json calendar data that ESPHome then parses to display the events
   - trigger:
-        - platform: time_pattern
-          minutes: "*"
+      - platform: time_pattern
+        minutes: "*"
     action:
-        # Get the calendar data
-        - service: calendar.get_events
-          data:
-            duration:
-              # How many days into the future entries should be fetched
-              days: 28
-          target:
-            entity_id:
-              # Add your calendar entity id's here
-              - calendar.x
-              - calendar.y
-              - calendar.z
-          response_variable: calendar_response
-        # Convert the received data into our custom format that the ESPHome firmware expects via a python script
-        - service: python_script.esp_calendar_data_conversion
-          data:
-            calendar: "{{ calendar_response }}"
-            now: "{{ now().date() }}"
-          response_variable: calendar_converted
+      # Get the calendar data
+      - service: calendar.get_events
+        data:
+          duration:
+            # How many days into the future entries should be fetched
+            days: 28
+        target:
+          entity_id:
+            # Add your calendar entity id's here
+            - calendar.x
+            - calendar.y
+            - calendar.z
+        response_variable: calendar_response
+      # Convert the received data into our custom format that the ESPHome firmware expects via a python script
+      - service: python_script.esp_calendar_data_conversion
+        data:
+          calendar: "{{ calendar_response }}"
+          now: "{{ now().date() }}"
+        response_variable: calendar_converted
     sensor:
-        - name: ESP Calendar Data
-          state: "OK"
-          attributes:
-            todays_day_name: >
-              {{ ['maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'][now().weekday()] }}
-            todays_date_month_year: >
-              {% set months = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"] %}
-              {{ months[now().month-1] }} {{  now().strftime('%Y') }}
-            closest_end_time: "{{ as_timestamp(calendar_converted.closest_end_time, default=0) }}"
-            entries: "{{ calendar_converted.entries }}"
+      - name: ESP Calendar Data
+        state: "OK"
+        attributes:
+          todays_day_name: >
+            {{ ['maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag','zondag'][now().weekday()] }}
+          todays_date_month_year: >
+            {% set months = ["januari", "februari", "maart", "april", "mei", "juni", "juli", "augustus", "september", "oktober", "november", "december"] %}
+            {{ months[now().month-1] }} {{  now().strftime('%Y') }}
+          closest_end_time: "{{ as_timestamp(calendar_converted.closest_end_time, default=0) }}"
+          entries: "{{ calendar_converted.entries }}"

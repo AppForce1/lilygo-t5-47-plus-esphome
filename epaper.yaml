@@ -46,9 +46,9 @@ esphome:
     - priority: -100.0
       then:
         # Update all sensors 
-        - component.update: lilygo_wifi_signal_sensor
-        - component.update: lilygo_last_wake_up_cause
-        - component.update: lilygo_battery_level
+        - component.update: wifi_signal_sensor
+        - component.update: last_wake_up_cause
+        - component.update: battery_level
 
   platformio_options:
     # Unless noted otherwise, based on https://github.com/Xinyuan-LilyGO/LilyGo-EPD47/blob/1eb6119fc31fcff7a6bafecb09f4225313859fc5/examples/demo/platformio.ini#L37
@@ -102,10 +102,9 @@ api:
 
 deep_sleep:
     id: deep_sleep_1
-    wakeup_pin: 
-      number: 21
-      allow_other_uses: True
-      inverted: true
+    esp32_ext1_wakeup:
+      pins: GPIO21
+      mode: ALL_LOW
 
 ota:
   password: !secret ota_password
@@ -175,7 +174,7 @@ script:
               - and:
                   - lambda: 'return id(battery_empty_symbol_shown) == true;'
                   - sensor.in_range:
-                      id: lilygo_battery_level
+                      id: battery_level
                       above: 0.0
           then:
             - logger.log: 'Calendar data updated - Refreshing panel...'
@@ -185,7 +184,7 @@ script:
       - if:
           condition:
             sensor.in_range:
-              id: lilygo_battery_level
+              id: battery_level
               below: 0.0
           then:
             - logger.log: 'Battery is empty - Refreshing panel to show icon...'
@@ -259,7 +258,7 @@ script:
       - wait_until:
           condition: time.has_time
       - sensor.template.publish:
-          id: lilygo_last_wake_up
+          id: last_wake_up
           state: !lambda 'return id(homeassistant_time).now().timestamp;'
       - wait_until:
           condition:
@@ -318,14 +317,6 @@ binary_sensor:
         then:
           - script.execute: enter_deep_sleep
     
-  - platform: gpio
-    pin: 
-      number: GPIO21 #was GPIO39 on the previous board
-      inverted: True
-      allow_other_uses: True
-    name: "Button 1"
-    on_press:
-      - logger.log: PhysButton Pressed
 
 
   - platform: homeassistant
@@ -347,7 +338,7 @@ sensor:
     name: Last Wake Up
     device_class: timestamp
     entity_category: "diagnostic"
-    id: lilygo_last_wake_up
+    id: last_wake_up
   
   - platform: lilygo_t5_47_battery
     id: battery_voltage
@@ -356,7 +347,7 @@ sensor:
 
   - platform: template
     name: "Battery Level"
-    id: lilygo_battery_level
+    id: battery_level
     entity_category: diagnostic
     device_class: battery
     unit_of_measurement: '%'
@@ -372,12 +363,12 @@ sensor:
 
   - platform: wifi_signal
     name: WiFi Signal Sensor
-    id: lilygo_wifi_signal_sensor
+    id: wifi_signal_sensor
     entity_category: "diagnostic"
 
   - platform: template
     name: Last Wake Up Cause
-    id: lilygo_last_wake_up_cause
+    id: last_wake_up_cause
     entity_category: "diagnostic"
     accuracy_decimals: 0
     lambda: return esp_sleep_get_wakeup_cause();
@@ -633,7 +624,7 @@ display:
 
     it.strftime(5, it.get_height() - 5, id(font_clock), TextAlign::BOTTOM_LEFT, "%H:%M", id(ha_time).now());
         
-    if (id(lilygo_battery_level).state == 0.0) {
+    if (id(battery_level).state == 0.0) {
       id(battery_empty_symbol_shown) = true;
       it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["battery-alert-variant-outline"].c_str());
     } else {
