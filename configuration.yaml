@@ -10,9 +10,9 @@ input_boolean:
 template:
   # Binary sensor that indicates whether the calendar has been updated since the epaper panel was last refreshed - the screen will only refresh on wake up if true
   - binary_sensor:
-    - name: ESP Calendar Data Update During Deep Sleep
-      state: >
-        {{ states.sensor.esp_calendar_data.last_updated > states.sensor.last_display_update.last_updated }}
+      - name: ESP Calendar Data Update During Deep Sleep
+        state: >
+          {{ states.sensor.esp_calendar_data.last_updated > states.sensor.last_display_update.last_updated }}
   # Sensor that contains the json calendar data that ESPHome then parses to display the events
   - trigger:
       - platform: time_pattern

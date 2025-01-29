@@ -5,22 +5,22 @@ substitutions:
 
   deep_sleep_duration: 40min
   night_time_deep_sleep_duration: 2h
-  
+
   # Specify the full and empty voltage of the battery you use
   battery_full_voltage: "4.2" # in V
   battery_empty_voltage: "3.2" # in V
-  
+
   # Our timezone calculations are a bit off around midnigh. A full day event remains on screen when timzeon offset midnight has not passed yet. So we stop updating at 22:00 in the evening.
   night_time_start: "22"
   night_time_end: "6"
-  
+
   calendar_data_entity_id: sensor.esp_calendar_data
   calendar_data_update_during_deep_sleep_entity_id: binary_sensor.esp_calendar_data_update_during_deep_sleep
 
   # If you use a different font, you will probably need to adjust the spacing and positions in the code
-  font_medium: 'fonts/GoogleSans-Medium.ttf'
-  font_bold: 'fonts/GoogleSans-Bold.ttf'
-  font_mdi: 'fonts/material-design-webfont/materialdesignicons-webfont.ttf'
+  font_medium: "fonts/GoogleSans-Medium.ttf"
+  font_bold: "fonts/GoogleSans-Bold.ttf"
+  font_mdi: "fonts/material-design-webfont/materialdesignicons-webfont.ttf"
 
 esphome:
   name: lilygo
@@ -35,7 +35,7 @@ esphome:
         - if:
             condition:
               # 0 = normal boot
-              - lambda: 'return esp_sleep_get_wakeup_cause() == 0;'
+              - lambda: "return esp_sleep_get_wakeup_cause() == 0;"
             then:
               # Show "waiting for data" screen
               - script.execute: update_screen
@@ -45,7 +45,7 @@ esphome:
   on_shutdown:
     - priority: -100.0
       then:
-        # Update all sensors 
+        # Update all sensors
         - component.update: wifi_signal_sensor
         - component.update: last_wake_up_cause
         - component.update: battery_level
@@ -65,16 +65,16 @@ esphome:
     board_build.boot_freq: 80m
     platform_packages:
       - "toolchain-riscv32-esp"
-    build_flags:  # the first three defines are required for the screen library to function.
+    build_flags: # the first three defines are required for the screen library to function.
       - "-DBOARD_HAS_PSRAM"
-      - "-DARDUINO_RUNNING_CORE=0"  # TODO: this conflicts with the value from platformio's idedata, spewing a lot of warnings during the build.
-      - "-DARDUINO_EVENT_RUNNING_CORE=0"  # and this too
+      - "-DARDUINO_RUNNING_CORE=0" # TODO: this conflicts with the value from platformio's idedata, spewing a lot of warnings during the build.
+      - "-DARDUINO_EVENT_RUNNING_CORE=0" # and this too
       # In addition to lilygo's settings:
       # To enable reading logs over USB until `hardware_uart: USB_CDC` support
       # is added to `logger:`, as detailed in <https://github.com/esphome/feature-requests/issues/1906>:
       - "-DARDUINO_USB_MODE=1"
       - "-DARDUINO_USB_CDC_ON_BOOT=1"
-  libraries: 
+  libraries:
     - SPI
 
 esp32:
@@ -88,7 +88,6 @@ esp32:
     version: 2.0.3
     platform_version: 5.1.1
 
-
 # Enable logging
 logger:
 
@@ -101,10 +100,10 @@ api:
     key: !secret api_encryption_key
 
 deep_sleep:
-    id: deep_sleep_1
-    esp32_ext1_wakeup:
-      pins: GPIO21
-      mode: ALL_LOW
+  id: deep_sleep_1
+  esp32_ext1_wakeup:
+    pins: GPIO21
+    mode: ALL_LOW
 
 ota:
   password: !secret ota_password
@@ -120,7 +119,7 @@ wifi:
     password: "GyKWYQEVkV0L"
 
 captive_portal:
-  
+
 external_components:
   # https://github.com/nickolay/esphome-lilygo-t547plus
   - source: github://nickolay/esphome-lilygo-t547plus
@@ -141,29 +140,29 @@ globals:
   - id: data_received
     type: bool
     restore_value: no
-    initial_value: 'false'
+    initial_value: "false"
   - id: battery_empty_symbol_shown
     type: bool
     restore_value: yes
-    initial_value: 'true'
+    initial_value: "true"
   - id: last_display_update_stored
     type: long int
     restore_value: yes
-    initial_value: '0'
+    initial_value: "0"
   - id: boot_script_finished_running
     type: bool
     restore_value: no
-    initial_value: 'false'
+    initial_value: "false"
 
 script:
   - id: update_screen
     then:
-      - logger.log: 'Running update_screen script...'
+      - logger.log: "Running update_screen script..."
       - component.update: t5_display
-      - logger.log: 'Updating last_display_update timestamp...'
+      - logger.log: "Updating last_display_update timestamp..."
       - sensor.template.publish:
           id: last_display_update
-          state: !lambda 'return id(homeassistant_time).now().timestamp;'
+          state: !lambda "return id(homeassistant_time).now().timestamp;"
 
   - id: update_screen_if_data_updated
     then:
@@ -172,24 +171,24 @@ script:
             or:
               - binary_sensor.is_on: "calendar_data_update_during_deep_sleep"
               - and:
-                  - lambda: 'return id(battery_empty_symbol_shown) == true;'
+                  - lambda: "return id(battery_empty_symbol_shown) == true;"
                   - sensor.in_range:
                       id: battery_level
                       above: 0.0
           then:
-            - logger.log: 'Calendar data updated - Refreshing panel...'
+            - logger.log: "Calendar data updated - Refreshing panel..."
             - script.execute: update_screen
           else:
-            - logger.log: 'Calendar data has not been updated - Skipping panel refresh...'
+            - logger.log: "Calendar data has not been updated - Skipping panel refresh..."
       - if:
           condition:
             sensor.in_range:
               id: battery_level
               below: 0.0
           then:
-            - logger.log: 'Battery is empty - Refreshing panel to show icon...'
+            - logger.log: "Battery is empty - Refreshing panel to show icon..."
             - script.execute: update_screen
-            - logger.log: 'Battery is empty - Shutting down...'
+            - logger.log: "Battery is empty - Shutting down..."
             # - button.press: shutdown_button
   - id: check_deep_sleep
     then:
@@ -197,76 +196,76 @@ script:
       - delay: 500ms
       - if:
           condition:
-              - binary_sensor.is_off: disable_deep_sleep
+            - binary_sensor.is_off: disable_deep_sleep
           then:
             - script.execute: enter_deep_sleep
           else:
-            - logger.log: 'Deep sleep disabled - Waiting for OTA update...'
+            - logger.log: "Deep sleep disabled - Waiting for OTA update..."
             # Suspend component update to reduce frequency when deep sleep is disabled
             - component.suspend: battery_voltage
-            
+
   - id: enter_deep_sleep
     then:
       - lambda: |-
           auto time = id(homeassistant_time).now();
-  
+
           int night_time_start = $night_time_start;
           int night_time_end = $night_time_end;
-  
+
           // Default deep sleep duration
           long deep_sleep_duration_in_sec = parse_time_to_seconds("$deep_sleep_duration");
-          
+
           if (time.hour >= night_time_start || time.hour < night_time_end){
             // Night time use extended deep sleep duration
             deep_sleep_duration_in_sec = parse_time_to_seconds("$night_time_deep_sleep_duration");
             ESP_LOGD("deep_sleep_duration_finder", "Default duration (night time): %ld seconds", deep_sleep_duration_in_sec);
-  
+
             long night_end = seconds_until_night_end(time, night_time_end);
             if (deep_sleep_duration_in_sec > night_end) {
                   deep_sleep_duration_in_sec = night_end;
                   ESP_LOGD("deep_sleep_duration_finder", "Night time duration exceeds end of the configured night time, shortening to: %ld seconds", deep_sleep_duration_in_sec);
             }
-  
+
           } else {
             ESP_LOGD("deep_sleep_duration_finder", "Default duration (day time): %ld seconds", deep_sleep_duration_in_sec);
           }
-          
+
           // Time until midnight (+ 2s delay)
           long midnight = seconds_until_midnight(time);
           ESP_LOGD("deep_sleep_duration_finder", "Time until day change: %ld seconds", midnight);
           midnight = midnight != 0 ? midnight + 2 : midnight;
-  
+
           // Time until the next event end time (+ 61s delay)
           long next_event = seconds_until_closest_event_end(time, id(closest_end_time).state);
           ESP_LOGD("deep_sleep_duration_finder", "Time until next event ends: %ld seconds", next_event);
           next_event = next_event != 0 ? next_event + 61 : next_event;
-  
+
           // Calculate which comes first: default deep sleep duration, midnight, next event ends
           long sleep_durations[3] = {deep_sleep_duration_in_sec, midnight, next_event};
           long next_sleep_duration = find_non_zero_min_in_array(sleep_durations, 3);
           ESP_LOGD("deep_sleep_duration_finder", "Next sleep duration will be: %ld seconds", next_sleep_duration);
-          
+
           // Use result as the next deep sleep duration
           id(deep_sleep_1).set_sleep_duration(next_sleep_duration*1000);
-  
+
       - deep_sleep.enter:
           id: deep_sleep_1
-                
+
   - id: boot_script
     then:
-      - logger.log: 'Running boot script...'
+      - logger.log: "Running boot script..."
       - wait_until:
           condition: time.has_time
       - sensor.template.publish:
           id: last_wake_up
-          state: !lambda 'return id(homeassistant_time).now().timestamp;'
+          state: !lambda "return id(homeassistant_time).now().timestamp;"
       - wait_until:
           condition:
-            lambda: 'return id(data_received) == true;'
+            lambda: "return id(data_received) == true;"
       - if:
           condition:
             # 4 = wake up timer
-            - lambda: 'return esp_sleep_get_wakeup_cause() == 4;'
+            - lambda: "return esp_sleep_get_wakeup_cause() == 4;"
           then:
             # Deep sleep wake up - update screen if data has changed
             - script.execute: update_screen_if_data_updated
@@ -274,12 +273,12 @@ script:
             # normal boot or wakeup button - update screen
             - script.execute: update_screen
       - script.execute: check_deep_sleep
-      - lambda: 'id(boot_script_finished_running) = true;'
-                        
+      - lambda: "id(boot_script_finished_running) = true;"
+
 time:
   - platform: pcf8563
     id: internal_clock
-    address: 0x51  
+    address: 0x51
     i2c_id: bus_a
   - platform: homeassistant
     id: ha_time
@@ -290,7 +289,7 @@ time:
   - platform: homeassistant
     id: homeassistant_time
     on_time:
-      - seconds: '*'
+      - seconds: "*"
         then:
           - if:
               condition:
@@ -301,8 +300,8 @@ time:
         minutes: /5
         then:
           - if:
-              condition: 
-                lambda: 'return id(boot_script_finished_running) == true;'
+              condition:
+                lambda: "return id(boot_script_finished_running) == true;"
               then:
                 - script.execute: update_screen_if_data_updated
 
@@ -316,13 +315,19 @@ binary_sensor:
           binary_sensor.is_off: disable_deep_sleep
         then:
           - script.execute: enter_deep_sleep
-    
-
 
   - platform: homeassistant
     entity_id: $calendar_data_update_during_deep_sleep_entity_id
     id: calendar_data_update_during_deep_sleep
-        
+
+button:
+  - platform: template
+    name: "Force Update"
+    on_press:
+      then:
+        - logger.log: "Update triggered"
+        - script.execute: update_screen
+
 sensor:
   - platform: template
     name: Last Display Update
@@ -339,7 +344,7 @@ sensor:
     device_class: timestamp
     entity_category: "diagnostic"
     id: last_wake_up
-  
+
   - platform: lilygo_t5_47_battery
     id: battery_voltage
     voltage:
@@ -350,7 +355,7 @@ sensor:
     id: battery_level
     entity_category: diagnostic
     device_class: battery
-    unit_of_measurement: '%'
+    unit_of_measurement: "%"
     lambda: |-
       return id(battery_voltage).voltage->state;
     filters:
@@ -385,7 +390,7 @@ text_sensor:
     id: calendar_json
     on_value:
       then:
-         - lambda: 'id(data_received) = true;'
+        - lambda: "id(data_received) = true;"
 
   - platform: homeassistant
     entity_id: $calendar_data_entity_id
@@ -414,172 +419,2012 @@ font:
   - file: $font_medium
     id: font_clock
     size: 18
-    glyphs: [':', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    glyphs: [":", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
   - file: $font_medium
     id: font_medium_18
     size: 18
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_medium
     id: font_medium_20
     size: 20
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_medium
     id: font_medium_22
     size: 22
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_bold
     id: font_bold_22
     size: 22
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_bold
     id: font_bold_25
     size: 25
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_medium
     id: font_medium_35
     size: 35
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_bold
     id: font_bold_32
     size: 32
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_medium
     id: font_medium_45
     size: 45
-    glyphs: [' ', '!', '"', '%', '&', "'", '(', ')', '+', ',', '-', '.', '/', 
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '?', '@', 'A', 
-      'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-      'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '_', 'a', 'b', 'c', 'd', 
-      'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 
-      't', 'u', 'v', 'w', 'x', 'y', 'z', '¡', '°', '·', '¿', 'À', 'Á', 'Â', 'Ã', 
-      'Ä', 'Å', 'Æ', 'Ç', 'È', 'É', 'Ê', 'Ë', 'Ì', 'Í', 'Î', 'Ï', 'Ñ', 'Ò', 'Ó', 
-      'Ô', 'Õ', 'Ö', 'Ø', 'Ù', 'Ú', 'Û', 'Ü', 'Ý', 'Þ', 'à', 'á', 'â', 'ã', 
-      'ä', 'å', 'æ', 'ç', 'è', 'é', 'ê', 'ë', 'ì', 'í', 'î', 'ï', 'ð', 'ñ', 'ò', 
-      'ó', 'ô', 'õ', 'ö', 'ø', 'ù', 'ú', 'û', 'ü', 'ý', 'þ', 'ÿ', 'Ā', 'ā', 'Ă', 
-      'ă', 'Ą', 'ą', 'Ć', 'ć', 'Ĉ', 'ĉ', 'Č', 'č', 'Ď', 'ď', 'Đ', 'đ', 'Ē', 'ē', 
-      'Ė', 'ė', 'Ę', 'ę', 'Ě', 'ě', 'Ĝ', 'ĝ', 'Ğ', 'ğ', 'Ģ', 'ģ', 'Ĥ', 'ĥ', 'Ī', 
-      'ī', 'Į', 'į', 'ı', 'Ĵ', 'ĵ', 'Ķ', 'ķ', 'Ĺ', 'ĺ', 'Ļ', 'ļ', 'Ľ', 'ľ', 
-      'Ł', 'ł', 'Ń', 'ń', 'Ņ', 'ņ', 'Ň', 'ň', 'Ő', 'ő', 'Œ', 'œ', 'Ŕ', 'ŕ', 
-      'Ř', 'ř', 'Ś', 'ś', 'Ŝ', 'ŝ', 'Ş', 'ş', 'Š', 'š', 'Ţ', 'ţ', 'Ť', 'ť', 'Ũ', 
-      'ũ', 'Ū', 'ū', 'Ů', 'ů', 'Ű', 'ű', 'Ų', 'ų', 'Ŵ', 'ŵ', 'Ŷ', 'ŷ', 'Ÿ', 'Ź', 
-      'ź', 'Ż', 'ż', 'Ž', 'ž', 'Ș', 'ș', 'Ț', 'ț']
+    glyphs:
+      [
+        " ",
+        "!",
+        '"',
+        "%",
+        "&",
+        "'",
+        "(",
+        ")",
+        "+",
+        ",",
+        "-",
+        ".",
+        "/",
+        "0",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        ":",
+        ";",
+        "?",
+        "@",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+        "_",
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "¡",
+        "°",
+        "·",
+        "¿",
+        "À",
+        "Á",
+        "Â",
+        "Ã",
+        "Ä",
+        "Å",
+        "Æ",
+        "Ç",
+        "È",
+        "É",
+        "Ê",
+        "Ë",
+        "Ì",
+        "Í",
+        "Î",
+        "Ï",
+        "Ñ",
+        "Ò",
+        "Ó",
+        "Ô",
+        "Õ",
+        "Ö",
+        "Ø",
+        "Ù",
+        "Ú",
+        "Û",
+        "Ü",
+        "Ý",
+        "Þ",
+        "à",
+        "á",
+        "â",
+        "ã",
+        "ä",
+        "å",
+        "æ",
+        "ç",
+        "è",
+        "é",
+        "ê",
+        "ë",
+        "ì",
+        "í",
+        "î",
+        "ï",
+        "ð",
+        "ñ",
+        "ò",
+        "ó",
+        "ô",
+        "õ",
+        "ö",
+        "ø",
+        "ù",
+        "ú",
+        "û",
+        "ü",
+        "ý",
+        "þ",
+        "ÿ",
+        "Ā",
+        "ā",
+        "Ă",
+        "ă",
+        "Ą",
+        "ą",
+        "Ć",
+        "ć",
+        "Ĉ",
+        "ĉ",
+        "Č",
+        "č",
+        "Ď",
+        "ď",
+        "Đ",
+        "đ",
+        "Ē",
+        "ē",
+        "Ė",
+        "ė",
+        "Ę",
+        "ę",
+        "Ě",
+        "ě",
+        "Ĝ",
+        "ĝ",
+        "Ğ",
+        "ğ",
+        "Ģ",
+        "ģ",
+        "Ĥ",
+        "ĥ",
+        "Ī",
+        "ī",
+        "Į",
+        "į",
+        "ı",
+        "Ĵ",
+        "ĵ",
+        "Ķ",
+        "ķ",
+        "Ĺ",
+        "ĺ",
+        "Ļ",
+        "ļ",
+        "Ľ",
+        "ľ",
+        "Ł",
+        "ł",
+        "Ń",
+        "ń",
+        "Ņ",
+        "ņ",
+        "Ň",
+        "ň",
+        "Ő",
+        "ő",
+        "Œ",
+        "œ",
+        "Ŕ",
+        "ŕ",
+        "Ř",
+        "ř",
+        "Ś",
+        "ś",
+        "Ŝ",
+        "ŝ",
+        "Ş",
+        "ş",
+        "Š",
+        "š",
+        "Ţ",
+        "ţ",
+        "Ť",
+        "ť",
+        "Ũ",
+        "ũ",
+        "Ū",
+        "ū",
+        "Ů",
+        "ů",
+        "Ű",
+        "ű",
+        "Ų",
+        "ų",
+        "Ŵ",
+        "ŵ",
+        "Ŷ",
+        "ŷ",
+        "Ÿ",
+        "Ź",
+        "ź",
+        "Ż",
+        "ż",
+        "Ž",
+        "ž",
+        "Ș",
+        "ș",
+        "Ț",
+        "ț",
+      ]
   - file: $font_bold
     id: font_bold_150
     size: 150
-    glyphs: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    
+    glyphs: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
   - file: $font_mdi
     id: font_mdi_large
     size: 300
@@ -587,281 +2432,279 @@ font:
       # Definitions from https://github.com/kivymd/KivyMD/blob/master/kivymd/icon_definitions.py
       - "\U000f10cd" # battery-alert-variant-outline
       - "\U000F0E8E" # calendar-sync
-  
+
 display:
-- platform: t547
-  id: t5_display
-  rotation: 270
-  update_interval: never
-  lambda: |-
-    std::map < std::string, std::string > icon_map {
-      {
-        "battery-alert-variant-outline",
-        "\U000f10cd"
-      }, {
-        "calendar-sync",
-        "\U000F0E8E"
-      }
-    };
-    
-    auto color_content = Color::WHITE;
-    auto color_background = Color::BLACK;
-    
-    int screen_height = $screen_height;
-    int screen_width = $screen_width;
-    
-    // Fill background in black.
-    it.fill(color_background);
-    
-    float battery_full_voltage = $battery_full_voltage;
-    float battery_empty_voltage = $battery_empty_voltage;
-    
-    float battery_percentage = (id(battery_voltage).voltage->state - battery_empty_voltage) * 100.0 / (battery_full_voltage - battery_empty_voltage);
+  - platform: t547
+    id: t5_display
+    rotation: 270
+    update_interval: never
+    lambda: |-
+      std::map < std::string, std::string > icon_map {
+        {
+          "battery-alert-variant-outline",
+          "\U000f10cd"
+        }, {
+          "calendar-sync",
+          "\U000F0E8E"
+        }
+      };
 
-    it.printf(it.get_width()-5, it.get_height()-5, id(font_battery), TextAlign::BOTTOM_RIGHT, "Battery: %.1f%% (%.1fV)", battery_percentage, id(battery_voltage).voltage->state);
-    // https://esphome.io/cookbook/display_time_temp_oled.html 
-    // it.printf(10, 100, id(font_1), "Internal Temp: %.1f°C", id(esptemp).state);
+      auto color_content = Color::WHITE;
+      auto color_background = Color::BLACK;
 
-    it.strftime(5, it.get_height() - 5, id(font_clock), TextAlign::BOTTOM_LEFT, "%H:%M", id(ha_time).now());
-        
-    if (id(battery_level).state == 0.0) {
-      id(battery_empty_symbol_shown) = true;
-      it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["battery-alert-variant-outline"].c_str());
-    } else {
-      id(battery_empty_symbol_shown) = false;
-    
-      if (id(data_received) == false) {
-        it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["calendar-sync"].c_str());
-        it.printf(screen_width / 2, 780, id(font_medium_20), color_content, TextAlign::BOTTOM_CENTER, "Waiting for data...");
+      int screen_height = $screen_height;
+      int screen_width = $screen_width;
+
+      // Fill background in black.
+      it.fill(color_background);
+
+      float battery_full_voltage = $battery_full_voltage;
+      float battery_empty_voltage = $battery_empty_voltage;
+
+      float battery_percentage = (id(battery_voltage).voltage->state - battery_empty_voltage) * 100.0 / (battery_full_voltage - battery_empty_voltage);
+
+      it.printf(it.get_width()-5, it.get_height()-5, id(font_battery), TextAlign::BOTTOM_RIGHT, "Battery: %.1f%% (%.1fV)", battery_percentage, id(battery_voltage).voltage->state);
+      // https://esphome.io/cookbook/display_time_temp_oled.html 
+      // it.printf(10, 100, id(font_1), "Internal Temp: %.1f°C", id(esptemp).state);
+
+      it.strftime(5, it.get_height() - 5, id(font_clock), TextAlign::BOTTOM_LEFT, "%H:%M", id(ha_time).now());
+          
+      if (id(battery_level).state == 0.0) {
+        id(battery_empty_symbol_shown) = true;
+        it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["battery-alert-variant-outline"].c_str());
       } else {
-        auto time = id(homeassistant_time).now();
-    
-        // Calculate today date width
-        int day_of_month_width = get_text_width( & it, id(font_bold_150), "%d", time.day_of_month);
-        int todays_day_name_width = get_text_width( & it, id(font_medium_35), "%s", id(todays_day_name).state.c_str());
-        int day_title_width = get_text_width( & it, id(font_medium_20), "%s", id(todays_date_month_year).state.c_str());
-        
-        int todays_date_widths[3] = {day_of_month_width, todays_day_name_width, day_title_width};
-        int max_todays_date_width = find_max_in_array(todays_date_widths, 3);
-        
-        
-        int todays_date_x_offset = 20;
-    
-        int calendar_x_pos = 220;
-        int calendar_y_pos = 35; 
-    
-        int days_padding_bottom = 10;
-    
-        int circle_size = 17;
-    
-        int cell_size_width = 50;
-        int cell_size_height = 30;
-        
-        
-        if (max_todays_date_width > 210) {
-          todays_date_x_offset = 13;
-          calendar_x_pos = 280;
-          cell_size_width = 48;
-        }
-        
-        it.printf(max_todays_date_width / 2 + todays_date_x_offset, 10, id(font_bold_150), color_content, TextAlign::TOP_CENTER, "%d", time.day_of_month);
-        it.printf(max_todays_date_width / 2 + todays_date_x_offset, 155, id(font_medium_35), color_content, TextAlign::TOP_CENTER, "%s", id(todays_day_name).state.c_str());
-        it.printf(max_todays_date_width / 2 + todays_date_x_offset, 195, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", id(todays_date_month_year).state.c_str());
-    
-        // Draw Calendar
-    
-        char cal[7][7][3]; // Calendar matrix including weekdays
-        int days_line_left_position = 0;
-        int days_line_right_position = 0;
-    
-        get_calendar_matrix(time.year, time.month, cal);
-    
-        for (int i = 0; i < 7; i++) {
-          for (int j = 0; j < 7; j++) {
-            int x_pos = calendar_x_pos + cell_size_width * j;
-            int y_pos = calendar_y_pos + cell_size_height * i;
-    
-            if (i == 0) {
-              // Header (day names)
-              it.printf(x_pos, y_pos, id(font_bold_25), color_content, TextAlign::CENTER, "%s", cal[i][j]);
-              if (j == 0) {
-                days_line_left_position = x_pos - (get_text_width( & it, id(font_bold_22), "%s", cal[i][j]) / 2);
-              } else if (j == 6) {
-                days_line_right_position = x_pos + (get_text_width( & it, id(font_bold_22), "%s", cal[i][j]) / 2);
-              }
-            } else {
-              // Day numbers
-              y_pos += days_padding_bottom;
-              if (atoi(cal[i][j]) == time.day_of_month) {
-                // Highlight current day
-                it.filled_circle(x_pos, y_pos - 1, circle_size, color_content);
-                it.printf(x_pos, y_pos, id(font_bold_22), color_background, TextAlign::CENTER, "%s", cal[i][j]);
-              } else {
-                it.printf(x_pos, y_pos, id(font_medium_22), color_content, TextAlign::CENTER, "%s", cal[i][j]);
-              }
-            }
+        id(battery_empty_symbol_shown) = false;
+
+        if (id(data_received) == false) {
+          it.printf(screen_width / 2, 400, id(font_mdi_large), color_content, TextAlign::CENTER, "%s", icon_map["calendar-sync"].c_str());
+          it.printf(screen_width / 2, 780, id(font_medium_20), color_content, TextAlign::BOTTOM_CENTER, "Waiting for data...");
+        } else {
+          auto time = id(homeassistant_time).now();
+
+          // Calculate today date width
+          int day_of_month_width = get_text_width( & it, id(font_bold_150), "%d", time.day_of_month);
+          int todays_day_name_width = get_text_width( & it, id(font_medium_35), "%s", id(todays_day_name).state.c_str());
+          int day_title_width = get_text_width( & it, id(font_medium_20), "%s", id(todays_date_month_year).state.c_str());
+          
+          int todays_date_widths[3] = {day_of_month_width, todays_day_name_width, day_title_width};
+          int max_todays_date_width = find_max_in_array(todays_date_widths, 3);
+          
+          
+          int todays_date_x_offset = 20;
+
+          int calendar_x_pos = 220;
+          int calendar_y_pos = 35; 
+
+          int days_padding_bottom = 10;
+
+          int circle_size = 17;
+
+          int cell_size_width = 50;
+          int cell_size_height = 30;
+          
+          
+          if (max_todays_date_width > 210) {
+            todays_date_x_offset = 13;
+            calendar_x_pos = 280;
+            cell_size_width = 48;
           }
-          if (i == 1) {
-            it.line(days_line_left_position, calendar_y_pos + (cell_size_height / 2), days_line_right_position, calendar_y_pos + (cell_size_height / 2), color_content);
-          }
-        }
-    
-        // End Draw Calendar
-    
-        it.filled_rectangle(0, 230, 600, 3, color_content);
-    
-        // Draw event list
-        DynamicJsonDocument doc(4096);
-        deserializeJson(doc, id(calendar_json).state.c_str());
-        JsonArray entries = doc.as<JsonArray>();
-                
-        int current_y_position = 250; // Initial vertical position
-        const int max_y_position = screen_height; // Maximum vertical position
-        const int events_top_padding = 5; // Padding top first event within a day
-        const int event_spacing = 10; // Spacing between the events within a day
-        const int events_bottom_padding = 5; // Padding after the last entry of the day
-        const int day_spacing = 15; // Spacing between different days
-        
-        int max_event_title_length = 30; // Max characters event title 
-        int max_event_subtitle_length = 40; // Max characters event subtitle 
-        
-        for (JsonVariant entry: entries) {
-          int day_number = entry["day"].as < int > ();
-          const char * day_name = entry["day_name"];
-        
-          // Calculate day title height
-          int day_number_height = get_text_height( & it, id(font_medium_45), "%d", day_number);
-          int day_name_height = get_text_height( & it, id(font_medium_20), "%s", day_name);
-          int day_title_height = day_number_height + day_name_height; // Total space needed for the day title
-        
-          // Check if there's enough space for the day's title before drawing
-          if (current_y_position + day_title_height > max_y_position) break;
-        
-          // Draw day title
-          it.printf(45, current_y_position, id(font_medium_45), color_content, TextAlign::TOP_CENTER, "%d", day_number);
-          it.printf(45, current_y_position + day_number_height - 5, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", day_name);
-        
-          int entry_y_position = current_y_position + events_top_padding; // Initialize entry_y_position to align with the day number + optional padding
-        
-          auto processEntry = [ & ](const JsonVariant & item) -> bool {
-            std::string summary = item["summary"].as < std::string > ();
-            const char * start = item["start"];
-            const char * end = item["end"];
-            const char * location_name = item["location_name"];
-            const char * calendar_name = item["calendar_name"];
-        
-            // Create copy we can modify
-            int max_event_title_chars = max_event_title_length; 
-            int max_event_subtitle_chars = max_event_subtitle_length; 
-        
-            std::string start_time = start ? extract_time(start) : "";
-            std::string end_time = end ? extract_time(end) : "";
-        
-            // start_time == empty => day event (check if multiple days to add that information)
-            if (start_time.empty()) {
-        
-              // Get current date in format yyyy-mm-dd
-              auto get_current_date_str = []() -> std::string {
-                auto now = id(homeassistant_time).now();
-        
-                char buffer[11];
-                sprintf(buffer, "%d-%02d-%02d", now.year, now.month, now.day_of_month);
-        
-                return std::string(buffer);
-              };
-        
-              // Calculate length of event in days
-              int days = days_between_dates(start, end);
-        
-              // If event is longer than just today
-              if (days > 1) {
-                if (start == get_current_date_str()) {
-                  // Event is today
-                  // Subtract today from the length in days
-                  days -= 1;
-                  end_time = "left";
-                } else {
-                  end_time = "long";
+          
+          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 10, id(font_bold_150), color_content, TextAlign::TOP_CENTER, "%d", time.day_of_month);
+          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 155, id(font_medium_35), color_content, TextAlign::TOP_CENTER, "%s", id(todays_day_name).state.c_str());
+          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 195, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", id(todays_date_month_year).state.c_str());
+
+          // Draw Calendar
+
+          char cal[7][7][3]; // Calendar matrix including weekdays
+          int days_line_left_position = 0;
+          int days_line_right_position = 0;
+
+          get_calendar_matrix(time.year, time.month, cal);
+
+          for (int i = 0; i < 7; i++) {
+            for (int j = 0; j < 7; j++) {
+              int x_pos = calendar_x_pos + cell_size_width * j;
+              int y_pos = calendar_y_pos + cell_size_height * i;
+
+              if (i == 0) {
+                // Header (day names)
+                it.printf(x_pos, y_pos, id(font_bold_25), color_content, TextAlign::CENTER, "%s", cal[i][j]);
+                if (j == 0) {
+                  days_line_left_position = x_pos - (get_text_width( & it, id(font_bold_22), "%s", cal[i][j]) / 2);
+                } else if (j == 6) {
+                  days_line_right_position = x_pos + (get_text_width( & it, id(font_bold_22), "%s", cal[i][j]) / 2);
                 }
-        
-                start_time = std::to_string(days) + ((days > 1) ? " days" : " day");
-        
               } else {
-                // Event won't have time information so the title and subtitle can be longer
-                max_event_title_chars += 4;
-                max_event_subtitle_chars += 6;
+                // Day numbers
+                y_pos += days_padding_bottom;
+                if (atoi(cal[i][j]) == time.day_of_month) {
+                  // Highlight current day
+                  it.filled_circle(x_pos, y_pos - 1, circle_size, color_content);
+                  it.printf(x_pos, y_pos, id(font_bold_22), color_background, TextAlign::CENTER, "%s", cal[i][j]);
+                } else {
+                  it.printf(x_pos, y_pos, id(font_medium_22), color_content, TextAlign::CENTER, "%s", cal[i][j]);
+                }
               }
             }
-        
-            // std::string subtitle_string = std::string(calendar_name) + (location_name && strlen(location_name) > 0 ? " · " + std::string(location_name) : "");
-            std::string subtitle_string = (location_name && strlen(location_name) > 0 ? std::string(location_name) : "");
+            if (i == 1) {
+              it.line(days_line_left_position, calendar_y_pos + (cell_size_height / 2), days_line_right_position, calendar_y_pos + (cell_size_height / 2), color_content);
+            }
+          }
 
-            if (subtitle_string.length() > max_event_subtitle_chars) {
-              subtitle_string = subtitle_string.substr(0, max_event_subtitle_chars - 3) + "...";
+          // End Draw Calendar
+
+          it.filled_rectangle(0, 230, 600, 3, color_content);
+
+          // Draw event list
+          DynamicJsonDocument doc(4096);
+          deserializeJson(doc, id(calendar_json).state.c_str());
+          JsonArray entries = doc.as<JsonArray>();
+                  
+          int current_y_position = 250; // Initial vertical position
+          const int max_y_position = screen_height; // Maximum vertical position
+          const int events_top_padding = 5; // Padding top first event within a day
+          const int event_spacing = 10; // Spacing between the events within a day
+          const int events_bottom_padding = 5; // Padding after the last entry of the day
+          const int day_spacing = 15; // Spacing between different days
+          
+          int max_event_title_length = 30; // Max characters event title 
+          int max_event_subtitle_length = 40; // Max characters event subtitle 
+          
+          for (JsonVariant entry: entries) {
+            int day_number = entry["day"].as < int > ();
+            const char * day_name = entry["day_name"];
+          
+            // Calculate day title height
+            int day_number_height = get_text_height( & it, id(font_medium_45), "%d", day_number);
+            int day_name_height = get_text_height( & it, id(font_medium_20), "%s", day_name);
+            int day_title_height = day_number_height + day_name_height; // Total space needed for the day title
+          
+            // Check if there's enough space for the day's title before drawing
+            if (current_y_position + day_title_height > max_y_position) break;
+          
+            // Draw day title
+            it.printf(45, current_y_position, id(font_medium_45), color_content, TextAlign::TOP_CENTER, "%d", day_number);
+            it.printf(45, current_y_position + day_number_height - 5, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", day_name);
+          
+            int entry_y_position = current_y_position + events_top_padding; // Initialize entry_y_position to align with the day number + optional padding
+          
+            auto processEntry = [ & ](const JsonVariant & item) -> bool {
+              std::string summary = item["summary"].as < std::string > ();
+              const char * start = item["start"];
+              const char * end = item["end"];
+              const char * location_name = item["location_name"];
+              const char * calendar_name = item["calendar_name"];
+          
+              // Create copy we can modify
+              int max_event_title_chars = max_event_title_length; 
+              int max_event_subtitle_chars = max_event_subtitle_length; 
+          
+              std::string start_time = start ? extract_time(start) : "";
+              std::string end_time = end ? extract_time(end) : "";
+          
+              // start_time == empty => day event (check if multiple days to add that information)
+              if (start_time.empty()) {
+          
+                // Get current date in format yyyy-mm-dd
+                auto get_current_date_str = []() -> std::string {
+                  auto now = id(homeassistant_time).now();
+          
+                  char buffer[11];
+                  sprintf(buffer, "%d-%02d-%02d", now.year, now.month, now.day_of_month);
+          
+                  return std::string(buffer);
+                };
+          
+                // Calculate length of event in days
+                int days = days_between_dates(start, end);
+          
+                // If event is longer than just today
+                if (days > 1) {
+                  if (start == get_current_date_str()) {
+                    // Event is today
+                    // Subtract today from the length in days
+                    days -= 1;
+                    end_time = "left";
+                  } else {
+                    end_time = "long";
+                  }
+          
+                  start_time = std::to_string(days) + ((days > 1) ? " days" : " day");
+          
+                } else {
+                  // Event won't have time information so the title and subtitle can be longer
+                  max_event_title_chars += 4;
+                  max_event_subtitle_chars += 6;
+                }
+              }
+          
+              // std::string subtitle_string = std::string(calendar_name) + (location_name && strlen(location_name) > 0 ? " · " + std::string(location_name) : "");
+              std::string subtitle_string = (location_name && strlen(location_name) > 0 ? std::string(location_name) : "");
+
+              if (subtitle_string.length() > max_event_subtitle_chars) {
+                subtitle_string = subtitle_string.substr(0, max_event_subtitle_chars - 3) + "...";
+              }
+          
+              if (summary.length() > max_event_title_chars) {
+                summary = summary.substr(0, max_event_title_chars - 3) + "...";
+              }
+          
+              int summary_height = get_text_height( & it, id(font_bold_25), "%s", summary.c_str());
+              int subtitle_height = get_text_height( & it, id(font_medium_18), "%s", subtitle_string.c_str());
+          
+              // Check if event will still fit
+              if (entry_y_position + summary_height + subtitle_height + event_spacing <= max_y_position) {
+                // Draw event summary
+                it.printf(100, entry_y_position, id(font_bold_25), color_content, TextAlign::TOP_LEFT, "%s", summary.c_str());
+          
+                // Draw start time
+                if (!start_time.empty()) {
+                  it.printf(screen_width - 10, entry_y_position, id(font_bold_25), color_content, TextAlign::TOP_RIGHT, "%s", start_time.c_str());
+                }
+          
+                entry_y_position += summary_height + 2;
+          
+                // Draw subtitle string (calendar name and location)
+                if (subtitle_string.length() > 0) {
+                  it.printf(100, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_LEFT, "%s", subtitle_string.c_str());
+                }
+          
+                // Draw end time
+                if (!end_time.empty()) {
+                  it.printf(screen_width - 10, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_RIGHT, "%s", end_time.c_str());
+                }
+                if (subtitle_string.length() > 0 || !end_time.empty() ) {
+                  entry_y_position += subtitle_height + event_spacing;
+                }
+                
+                // Event drawn - return true
+                return true;
+              } else {
+                // Event did not fit and was not drawn - return false
+                return false;
+              }
+            };
+          
+            JsonArray all_day = entry["all_day"];
+            JsonArray other = entry["other"];
+          
+            for (JsonVariant item: all_day) {
+              if (!processEntry(item)) break;
             }
-        
-            if (summary.length() > max_event_title_chars) {
-              summary = summary.substr(0, max_event_title_chars - 3) + "...";
+          
+            for (JsonVariant item: other) {
+              if (!processEntry(item)) break;
             }
-        
-            int summary_height = get_text_height( & it, id(font_bold_25), "%s", summary.c_str());
-            int subtitle_height = get_text_height( & it, id(font_medium_18), "%s", subtitle_string.c_str());
-        
-            // Check if event will still fit
-            if (entry_y_position + summary_height + subtitle_height + event_spacing <= max_y_position) {
-              // Draw event summary
-              it.printf(100, entry_y_position, id(font_bold_25), color_content, TextAlign::TOP_LEFT, "%s", summary.c_str());
-        
-              // Draw start time
-              if (!start_time.empty()) {
-                it.printf(screen_width - 10, entry_y_position, id(font_bold_25), color_content, TextAlign::TOP_RIGHT, "%s", start_time.c_str());
-              }
-        
-              entry_y_position += summary_height + 2;
-        
-              // Draw subtitle string (calendar name and location)
-              if (subtitle_string.length() > 0) {
-                it.printf(100, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_LEFT, "%s", subtitle_string.c_str());
-              }
-        
-              // Draw end time
-              if (!end_time.empty()) {
-                it.printf(screen_width - 10, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_RIGHT, "%s", end_time.c_str());
-              }
-              if (subtitle_string.length() > 0 || !end_time.empty() ) {
-                entry_y_position += subtitle_height + event_spacing;
-              }
-              
-              // Event drawn - return true
-              return true;
-            } else {
-              // Event did not fit and was not drawn - return false
-              return false;
-            }
-          };
-        
-          JsonArray all_day = entry["all_day"];
-          JsonArray other = entry["other"];
-        
-          for (JsonVariant item: all_day) {
-            if (!processEntry(item)) break;
+          
+            entry_y_position += events_bottom_padding - event_spacing;
+          
+            // Draw the vertical line next to the day titles and events
+            it.line(85, current_y_position, 85, entry_y_position, color_content);
+          
+            // Update current_y_position for the next day, ensuring space between days
+            current_y_position = entry_y_position + day_spacing;
           }
-        
-          for (JsonVariant item: other) {
-            if (!processEntry(item)) break;
-          }
-        
-          entry_y_position += events_bottom_padding - event_spacing;
-        
-          // Draw the vertical line next to the day titles and events
-          it.line(85, current_y_position, 85, entry_y_position, color_content);
-        
-          // Update current_y_position for the next day, ensuring space between days
-          current_y_position = entry_y_position + day_spacing;
+          
+          // End Draw event list
         }
-        
-        // End Draw event list
       }
-    }
-
-
