@@ -21,9 +21,10 @@ template:
       # Get the calendar data
       - service: calendar.get_events
         data:
+          start_date_time: "{{ now() }}"
           duration:
             # How many days into the future entries should be fetched
-            days: 28
+            days: 10
         target:
           entity_id:
             # Add your calendar entity id's here
