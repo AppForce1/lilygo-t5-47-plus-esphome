@@ -2494,10 +2494,10 @@ display:
           int max_todays_date_width = find_max_in_array(todays_date_widths, 3);
           
           
-          int todays_date_x_offset = 20;
+          int todays_date_x_offset = 15;
 
-          int calendar_x_pos = 220;
-          int calendar_y_pos = 35; 
+          int calendar_x_pos = 210;
+          int calendar_y_pos = 10; 
 
           int days_padding_bottom = 10;
 
@@ -2513,9 +2513,9 @@ display:
             cell_size_width = 48;
           }
           
-          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 10, id(font_bold_150), color_content, TextAlign::TOP_CENTER, "%d", time.day_of_month);
-          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 155, id(font_medium_35), color_content, TextAlign::TOP_CENTER, "%s", id(todays_day_name).state.c_str());
-          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 195, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", id(todays_date_month_year).state.c_str());
+          it.printf(max_todays_date_width / 2 + todays_date_x_offset, -30, id(font_bold_150), color_content, TextAlign::TOP_CENTER, "%d", time.day_of_month);
+          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 115, id(font_medium_35), color_content, TextAlign::TOP_CENTER, "%s", id(todays_day_name).state.c_str());
+          it.printf(max_todays_date_width / 2 + todays_date_x_offset, 160, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", id(todays_date_month_year).state.c_str());
 
           // Draw Calendar
 
@@ -2557,14 +2557,14 @@ display:
 
           // End Draw Calendar
 
-          it.filled_rectangle(0, 230, 600, 3, color_content);
+          it.filled_rectangle(0, 190, 600, 3, color_content);
 
           // Draw event list
           DynamicJsonDocument doc(4096);
           deserializeJson(doc, id(calendar_json).state.c_str());
           JsonArray entries = doc.as<JsonArray>();
                   
-          int current_y_position = 250; // Initial vertical position
+          int current_y_position = 200; // Initial vertical position
           const int max_y_position = screen_height; // Maximum vertical position
           const int events_top_padding = 5; // Padding top first event within a day
           const int event_spacing = 10; // Spacing between the events within a day
@@ -2717,7 +2717,7 @@ display:
             entry_y_position += events_bottom_padding - event_spacing;
           
             // Draw the vertical line next to the day titles and events
-            it.line(85, current_y_position, 85, entry_y_position, color_content);
+            it.filled_rectangle(84, current_y_position, 2, entry_y_position - current_y_position, color_content);
           
             // Update current_y_position for the next day, ensuring space between days
             current_y_position = entry_y_position + day_spacing;
