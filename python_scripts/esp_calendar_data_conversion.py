@@ -5,7 +5,7 @@ CALENDAR_NAMES = {"calendar.x": "X", "calendar.Y": "Y"}
 # Day names (which are displayed in the calendar event list) can be translated here if required
 DAY_NAMES = ["ma", "di", "woe", "do", "vrij", "zat", "zon"]
 # How many entries to send to the ESPHome device
-MAX_ENTRIES = 10
+MAX_ENTRIES = 15
 
 def convert_calendar_format(data, today):
     # Initialize a dictionary to store events grouped by date
