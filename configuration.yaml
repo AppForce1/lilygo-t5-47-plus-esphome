@@ -7,6 +7,10 @@ input_boolean:
     name: Disable Deep Sleep
     icon: mdi:sleep-off
 
+  enable_debug_display:
+    name: Enable Debug Display
+    icon: mdi:toolbox
+
 template:
   # Binary sensor that indicates whether the calendar has been updated since the epaper panel was last refreshed - the screen will only refresh on wake up if true
   - binary_sensor:

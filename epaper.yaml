@@ -317,6 +317,10 @@ binary_sensor:
           - script.execute: enter_deep_sleep
 
   - platform: homeassistant
+    id: enable_debug_display
+    entity_id: input_boolean.enable_debug_display
+
+  - platform: homeassistant
     entity_id: $calendar_data_update_during_deep_sleep_entity_id
     id: calendar_data_update_during_deep_sleep
 
@@ -405,7 +409,7 @@ text_sensor:
 font:
   # https://github.com/hprobotic/Google-Sans-Font/blob/master/
   - file: $font_medium
-    id: font_battery
+    id: font_debug
     size: 18
   - file: $font_bold
     id: font_50
@@ -416,9 +420,6 @@ font:
   - file: $font_bold
     id: font_30
     size: 30
-  - file: $font_medium
-    id: font_clock
-    size: 18
     glyphs: [":", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
   - file: $font_medium
     id: font_medium_18
@@ -2461,13 +2462,16 @@ display:
       float battery_full_voltage = $battery_full_voltage;
       float battery_empty_voltage = $battery_empty_voltage;
 
-      float battery_percentage = (id(battery_voltage).voltage->state - battery_empty_voltage) * 100.0 / (battery_full_voltage - battery_empty_voltage);
+      if (id(enable_debug_display).state == true) {
+        float battery_percentage = (id(battery_voltage).voltage->state - battery_empty_voltage) * 100.0 / (battery_full_voltage - battery_empty_voltage);
+        it.printf(5, 5, id(font_debug), TextAlign::TOP_LEFT, "%.1f%% (%.1fV)", battery_percentage, id(battery_voltage).voltage->state);
+        it.strftime(150, 5, id(font_debug), TextAlign::TOP_LEFT, "%H:%M", id(ha_time).now());
+      }
 
-      it.printf(it.get_width()-5, it.get_height()-5, id(font_battery), TextAlign::BOTTOM_RIGHT, "Battery: %.1f%% (%.1fV)", battery_percentage, id(battery_voltage).voltage->state);
       // https://esphome.io/cookbook/display_time_temp_oled.html 
       // it.printf(10, 100, id(font_1), "Internal Temp: %.1f°C", id(esptemp).state);
 
-      it.strftime(5, it.get_height() - 5, id(font_clock), TextAlign::BOTTOM_LEFT, "%H:%M", id(ha_time).now());
+
           
       if (id(battery_level).state == 0.0) {
         id(battery_empty_symbol_shown) = true;
