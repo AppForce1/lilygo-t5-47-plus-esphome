@@ -2588,8 +2588,19 @@ display:
             if (current_y_position + day_title_height > max_y_position) break;
           
             // Draw day title
-            it.printf(45, current_y_position, id(font_medium_45), color_content, TextAlign::TOP_CENTER, "%d", day_number);
-            it.printf(45, current_y_position + day_number_height - 5, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", day_name);
+            bool is_current_day = (day_number == time.day_of_month);
+            auto text_color = is_current_day ? color_background : color_content;
+            
+            // Draw background highlight for current day
+            if (is_current_day) {
+              it.filled_rectangle(5, current_y_position, 81, day_title_height, color_content);
+            }
+            
+            // Draw day number and name
+            it.printf(45, current_y_position, id(font_medium_45), text_color, 
+                     TextAlign::TOP_CENTER, "%d", day_number);
+            it.printf(45, current_y_position + day_number_height - 5, id(font_medium_20), 
+                     text_color, TextAlign::TOP_CENTER, "%s", day_name);
           
             int entry_y_position = current_y_position + events_top_padding; // Initialize entry_y_position to align with the day number + optional padding
 
