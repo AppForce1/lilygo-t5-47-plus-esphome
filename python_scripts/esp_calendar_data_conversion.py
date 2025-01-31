@@ -96,7 +96,8 @@ def convert_calendar_format(data, today):
                 'is_today': int(date == dt_util.now().isoformat().split("T")[0]),
                 'day_name': DAY_NAMES[dt_util.parse_datetime(date).weekday()],
                 'all_day': all_day_events,
-                'other': other_events
+                'other': other_events,
+                'event_count': len(all_day_events) + len(other_events)
             }
             result.append(day_item)
         

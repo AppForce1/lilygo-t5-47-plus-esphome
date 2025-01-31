@@ -2572,6 +2572,7 @@ display:
           
           for (JsonVariant entry: entries) {
             int day_number = entry["day"].as < int > ();
+            int event_count = entry["event_count"].as < int > ();
             const char * day_name = entry["day_name"];
           
             // Calculate day title height
@@ -2587,7 +2588,7 @@ display:
             it.printf(45, current_y_position + day_number_height - 5, id(font_medium_20), color_content, TextAlign::TOP_CENTER, "%s", day_name);
           
             int entry_y_position = current_y_position + events_top_padding; // Initialize entry_y_position to align with the day number + optional padding
-          
+
             auto processEntry = [ & ](const JsonVariant & item) -> bool {
               std::string summary = item["summary"].as < std::string > ();
               const char * start = item["start"];
@@ -2673,10 +2674,12 @@ display:
                 if (!end_time.empty()) {
                   it.printf(screen_width - 10, entry_y_position, id(font_medium_18), color_content, TextAlign::TOP_RIGHT, "%s", end_time.c_str());
                 }
-                if (subtitle_string.length() > 0 || !end_time.empty() ) {
-                  entry_y_position += subtitle_height + event_spacing;
+                if (subtitle_string.length() > 0 || !end_time.empty() || event_count == 1) {
+                  entry_y_position += subtitle_height;
                 }
                 
+                entry_y_position += event_spacing;
+
                 // Event drawn - return true
                 return true;
               } else {
