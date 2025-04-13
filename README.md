@@ -18,6 +18,13 @@ But instead I am using a LilyGo T5 4.7" ePaper display. This is a 4.7" e-paper d
 
 The display provides excellent readability with a wide viewing angle and crisp text display, making it perfect for a calendar application. Since it's an e-paper display, it only consumes power when updating the screen, making it very energy efficient.
 
+Here's how I implemented this:
+
+![LilyGo T5 4.7" ePaper Display](LilyGo.png)
+
+## Language
+You migh notice I have translated a few things into Dutch. This is easy enough to change to any language of your preference by adjusting the strings in [configuration.yaml](configuration.yaml) and [esp_calendar_data_conversion.py](python_scripts/esp_calendar_data_conversion.py), look for DAY_NAMES.
+
 ## System Architecture
 
 ### 1. System Architecture Diagram
